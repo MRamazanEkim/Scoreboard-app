@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import filedialog, colorchooser, Toplevel
+from tkinter import filedialog, colorchooser, Toplevel, messagebox
 from PIL import Image, ImageTk, ImageGrab
 import os
 import sys
@@ -131,7 +131,7 @@ class ScoreboardApp:
         self.second_window = Toplevel(self.root)
         self.second_window.title("Preview")
         self.second_window.geometry("1280x720")
-        self.second_window.attributes('-fullscreen', True)
+        self.second_window.attributes('-fullscreen', False)
         self.second_window.bind("<Escape>", lambda event: self.toggle_second_window_fullscreen(self.second_window))
         
         # Get correct icon path
@@ -150,19 +150,23 @@ class ScoreboardApp:
         self.screenshot_label.pack()
     
     def capture_screenshot(self):
-        self.update_button.focus_set() # Remove focus from text fields
-        
+        if not self.fullscreen:
+            messagebox.showwarning("Dikkat", "Sadece tam ekranda kullanilabilir.")
+            return  # Stop execution if not in fullscreen
+    
+        self.update_button.focus_set()  # Remove focus from text fields
         self.root.update()
-        x1,y1 = 200,0
-        x2,y2 = 1680, 1080
+    
+        x1, y1 = 200, 0
+        x2, y2 = 1680, 1080
         screenshot = ImageGrab.grab(bbox=(x1, y1, x2, y2))
 
         self.second_window.geometry(f'{self.root.winfo_width()}x{self.root.winfo_height()}')
         screenshot = screenshot.resize((self.root.winfo_width(), self.root.winfo_height()), Image.LANCZOS)
         screenshot_img = ImageTk.PhotoImage(screenshot)
-        
+
         self.screenshot_label.config(image=screenshot_img)
-        self.screenshot_label.image = screenshot_img  # Keep a reference to prevent garbage collection
+        self.screenshot_label.image = screenshot_img
 
     def toggle_fullscreen(self, event=None):
         self.fullscreen = not self.fullscreen
