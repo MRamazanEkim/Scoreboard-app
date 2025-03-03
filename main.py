@@ -147,7 +147,7 @@ class ScoreboardApp:
 
     def create_second_window(self):
         self.second_window = Toplevel(self.root)
-        self.second_window.title("Preview")
+        self.second_window.title("2. Ekran")
         self.second_window.geometry("1280x720")
         self.second_window.attributes('-fullscreen', False)
         self.second_window.bind("<Escape>", lambda event: self.toggle_second_window_fullscreen(self.second_window))
