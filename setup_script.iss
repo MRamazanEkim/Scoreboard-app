@@ -3,7 +3,7 @@
 
 [Setup]
 AppName=M3 Scoreboard
-AppVersion=1.0
+AppVersion=1.4
 DefaultDirName={pf}\M3 Scoreboard
 DefaultGroupName=M3 Scoreboard
 OutputDir=.
