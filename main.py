@@ -43,7 +43,7 @@ class ScoreboardApp:
         self.team1_players = []
 
         # Scoreboard Frame (Wider)
-        self.scoreboard_frame = tk.Frame(root, bg="black", bd=10, padx=50, pady=30)  
+        self.scoreboard_frame = tk.Frame(root, bg="black", bd=10, padx=60, pady=10)  
         self.scoreboard_frame.place(relx=0.5, rely=0.5, anchor="center")
 
         # Delete & Add Buttons (Side by Side with Team Name)
@@ -98,14 +98,14 @@ class ScoreboardApp:
             "rank": tk.StringVar(value=str(row))
         }
 
-        entry_rank = tk.Label(self.scoreboard_frame, textvariable=player["rank"], font=("Arial", 24), width=3, bg="black", fg="white")
-        entry_rank.grid(row=row, column=0, pady=10, padx=10)
+        entry_rank = tk.Label(self.scoreboard_frame, textvariable=player["rank"], font=("Arial", 20), width=3, bg="black", fg="white")
+        entry_rank.grid(row=row, column=0, pady=5, padx=10)
 
-        entry_name = tk.Entry(self.scoreboard_frame, textvariable=player["name"], font=("Arial", 24), width=12, justify="center")
-        entry_name.grid(row=row, column=1, pady=10, padx=10)
+        entry_name = tk.Entry(self.scoreboard_frame, textvariable=player["name"], font=("Arial", 20), width=12, justify="center")
+        entry_name.grid(row=row, column=1, pady=5, padx=10)
 
-        entry_score = tk.Entry(self.scoreboard_frame, textvariable=player["score"], font=("Arial", 24), width=6, justify="center")
-        entry_score.grid(row=row, column=2, pady=10, padx=10)
+        entry_score = tk.Entry(self.scoreboard_frame, textvariable=player["score"], font=("Arial", 20), width=6, justify="center")
+        entry_score.grid(row=row, column=2, pady=5, padx=10)
 
         player["score"].trace_add("write", lambda *args, p=team: self.update_ranks(p))
         player["widgets"] = [entry_rank, entry_name, entry_score]
@@ -193,6 +193,8 @@ class ScoreboardApp:
         color = colorchooser.askcolor()[1]
         if color:
             self.scoreboard_frame.config(bg=color)
+        else:
+            self.scoreboard_frame.config(bg="SystemTransparent")  # Set transparent
     
     # Function to change Team Name color
     def change_team_name_color(self):
