@@ -3,6 +3,7 @@ from tkinter import filedialog, colorchooser, Toplevel, messagebox, simpledialog
 from PIL import Image, ImageTk, ImageGrab
 import os
 import sys
+import re
 
 
 class ScoreboardApp:
@@ -11,6 +12,9 @@ class ScoreboardApp:
     def __init__(self, root):
         self.root = root
         self.root.title("M3 Scoreboard")
+        
+        # Add mode state
+        self.is_time_mode = False
         
         # Fix icon path handling for PyInstaller
         if getattr(sys, 'frozen', False):
@@ -83,6 +87,10 @@ class ScoreboardApp:
         self.update_button = tk.Button(self.root, text="#", font=("Arial", 14), command=self.capture_screenshot, width=3, height=1, bg="gray", fg="white", relief="raised", bd=5)
         self.update_button.place(relx=0.02, rely=0.98, anchor="sw")
         
+        # Add Mode Toggle Button
+        self.mode_button = tk.Button(self.root, text="⏱️", font=("Arial", 14), command=self.toggle_mode, width=3, height=1, bg="blue", fg="white", relief="raised", bd=5)
+        self.mode_button.place(relx=0.02, rely=0.92, anchor="sw")
+        
         # Font Selection Buttons
         self.title_font_button = tk.Button(self.root, text="Title Font", command=self.pick_title_font)
         self.title_font_button.place(relx=0.06, rely=0.02, anchor="ne")
@@ -112,7 +120,7 @@ class ScoreboardApp:
 
         player = {
             "name": tk.StringVar(value=f"Player {row}"),
-            "score": tk.IntVar(value=0),
+            "score": tk.StringVar(value="00:00:00" if self.is_time_mode else "0"),
             "rank": tk.StringVar(value=str(row))
         }
 
@@ -122,8 +130,23 @@ class ScoreboardApp:
         entry_name = tk.Entry(self.scoreboard_frame, textvariable=player["name"], font=self.player_font, width=12, justify="center")
         entry_name.grid(row=row, column=1, pady=5, padx=10)
 
-        entry_score = tk.Entry(self.scoreboard_frame, textvariable=player["score"], font=self.player_font, width=6, justify="center")
+        entry_score = tk.Entry(self.scoreboard_frame, textvariable=player["score"], font=self.player_font, width=8, justify="center")
         entry_score.grid(row=row, column=2, pady=5, padx=10)
+
+        # Add validation for time format
+        def validate_time(P):
+            if not self.is_time_mode:
+                return True
+            if P == "":
+                return True
+                
+            # Allow input that matches our time format patterns
+            if re.match(r'^\d{0,2}:?\d{0,2}:?\d{0,2}$', P):
+                return True
+            return False
+
+        vcmd = (self.root.register(validate_time), '%P')
+        entry_score.config(validate='key', validatecommand=vcmd)
 
         player["score"].trace_add("write", lambda *args, p=team: self.update_ranks(p))
         player["widgets"] = [entry_rank, entry_name, entry_score]
@@ -133,8 +156,25 @@ class ScoreboardApp:
         if not players:
             return  # Avoid errors if no players exist
 
-        # Sort players by score (highest first)
-        players.sort(key=lambda p: p["score"].get(), reverse=True)
+        # Convert scores to comparable values
+        def get_score_value(player):
+            if self.is_time_mode:
+                try:
+                    time_str = player["score"].get()
+                    if re.match(r'^\d{2}:\d{2}:\d{2}$', time_str):
+                        hours, minutes, seconds = map(int, time_str.split(':'))
+                        return hours * 3600 + minutes * 60 + seconds
+                except:
+                    return float('inf')  # Invalid time format
+                return float('inf')
+            else:
+                try:
+                    return int(player["score"].get())
+                except:
+                    return 0
+
+        # Sort players by score (highest first for score mode, lowest first for time mode)
+        players.sort(key=get_score_value, reverse=not self.is_time_mode)
 
         # Update ranks and reorder widgets
         for rank, player in enumerate(players, start=1):
@@ -274,6 +314,34 @@ class ScoreboardApp:
         
         apply_button = tk.Button(font_window, text="Apply Font", command=apply_font)
         apply_button.pack()
+
+    def toggle_mode(self):
+        self.is_time_mode = not self.is_time_mode
+        self.mode_button.config(text="⏱️" if self.is_time_mode else "🎯")
+        # Update all existing entries
+        for player in self.team1_players:
+            if self.is_time_mode:
+                # Convert score to time format if possible
+                try:
+                    score = int(player["score"].get())
+                    hours = score // 3600
+                    minutes = (score % 3600) // 60
+                    seconds = score % 60
+                    player["score"].set(f"{hours:02d}:{minutes:02d}:{seconds:02d}")
+                except:
+                    player["score"].set("00:00:00")
+            else:
+                # Convert time to score if possible
+                try:
+                    time_str = player["score"].get()
+                    if re.match(r'^\d{2}:\d{2}:\d{2}$', time_str):
+                        hours, minutes, seconds = map(int, time_str.split(':'))
+                        player["score"].set(hours * 3600 + minutes * 60 + seconds)
+                    else:
+                        player["score"].set(0)
+                except:
+                    player["score"].set(0)
+        self.update_ranks(self.team1_players)
 
 root = tk.Tk()
 root.geometry("1280x720")
